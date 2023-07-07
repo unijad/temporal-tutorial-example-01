@@ -17,7 +17,8 @@ func TestWeatherWorkflow(t *testing.T) {
 	env := testSuite.NewTestWorkflowEnvironment()
 
 	// Mock activity implementation
-	env.OnActivity(activity.GetWeather, mock.Anything, mock.Anything).Return(messages.WeatherData{
+	env.OnActivity(activity.GetWeather, mock.Anything, mock.Anything).Return(&messages.WeatherData{
+		CityName:    "Cairo",
 		Temperature: 41,
 		Humidity:    80,
 		WindSpeed:   4,
@@ -32,6 +33,7 @@ func TestWeatherWorkflow(t *testing.T) {
 	require.NoError(t, env.GetWorkflowResult(&data))
 	require.Equal(t, []messages.WeatherData{
 		{
+			CityName:    "Cairo",
 			Temperature: 41,
 			Humidity:    80,
 			WindSpeed:   4,

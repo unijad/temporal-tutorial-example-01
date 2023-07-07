@@ -29,6 +29,12 @@ func main() {
 	server := &http.Server{Addr: ":5000", Handler: mux}
 
 	// start the worker and the web server
-	go w.Run(worker.InterruptCh())
+	go func() {
+		err = w.Run(worker.InterruptCh())
+		if err != nil {
+			log.Fatalln("unable to start Worker", err)
+		}
+	}()
+
 	log.Fatal(server.ListenAndServe())
 }

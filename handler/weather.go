@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"goenv/messages"
 	"goenv/workflow"
 	"log"
@@ -26,19 +28,9 @@ func WeatherHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
-	we, err := c.ExecuteWorkflow(r.Context(), client.StartWorkflowOptions{
-		ID:        "weather_workflow",
-		TaskQueue: "weather",
-	}, workflow.WeatherWorkflow, cityName)
+	result, err := WeatherGet(context.Background(), c, cityName)
 	if err != nil {
-		http.Error(w, "unable to start workflow", http.StatusInternalServerError)
-		return
-	}
-
-	// wait for workflow to complete
-	var result []messages.WeatherData
-	if err := we.Get(r.Context(), &result); err != nil {
-		http.Error(w, "unable to get workflow result", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -56,4 +48,41 @@ func WeatherHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
+	if err != nil {
+		http.Error(w, "unable to write response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func WeatherGet(ctx context.Context, temporalClient client.Client, cityName string) ([]*messages.WeatherData, error) {
+	we, err := temporalClient.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:        "weather_workflow",
+		TaskQueue: "weather",
+	}, workflow.WeatherWorkflow, cityName)
+	if err != nil {
+		return nil, err
+	}
+
+	// wait for workflow to complete
+	var result []*messages.WeatherData
+	if err := we.Get(ctx, &result); err != nil {
+		err := &messages.Error{
+			RunId:   we.GetRunID(),
+			Message: err.Error(),
+		}
+		return nil, errors.New(string(err.ErrorJSON()))
+	}
+
+	return result, nil
+}
+
+func WeatherUpdate(ctx context.Context, temporalClient client.Client, cityName string) {
+	data := messages.WeatherData{
+		CityName: cityName,
+	}
+	err := temporalClient.SignalWorkflow(ctx, "your-workflow-id", "", "your-signal-name", data)
+	if err != nil {
+		log.Fatalln("Error sending the Signal", err)
+		return
+	}
 }

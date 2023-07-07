@@ -1,15 +1,41 @@
 package store
 
 import (
-	"context"
 	"goenv/messages"
+
+	_ "github.com/lib/pq"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
-func GetCurrentWeather(ctx context.Context, cityName string) (messages.WeatherData, error) {
-	// code to fetch the current weather for a given city
-	return messages.WeatherData{
-		Temperature: 36,
-		Humidity:    40,
-		WindSpeed:   21,
-	}, nil
+const (
+	DB_USER     = "1"
+	DB_PASSWORD = ""
+	DB_NAME     = "temporal_example"
+)
+
+type Database struct {
+	gorm *gorm.DB
+}
+
+func (d *Database) Connect() error {
+	db, err := gorm.Open(sqlite.Open("store.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	err = db.AutoMigrate(&messages.WeatherData{})
+	if err != nil {
+		panic("failed to migrate database")
+	}
+	// look if any records exists and if not add record
+	var count int64
+	db.Model(&messages.WeatherData{}).Count(&count)
+	if count == 0 {
+		db.Create(&messages.WeatherData{CityName: "London", Temperature: 36, Humidity: 40, WindSpeed: 21})
+	}
+
+	d.gorm = db
+
+	return nil
 }

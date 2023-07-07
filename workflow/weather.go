@@ -5,6 +5,7 @@ import (
 	"goenv/messages"
 	"time"
 
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -12,6 +13,13 @@ import (
 func WeatherWorkflow(ctx workflow.Context, cityName string) ([]messages.WeatherData, error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 5,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:        time.Second,
+			BackoffCoefficient:     2.0,
+			MaximumInterval:        time.Minute,
+			MaximumAttempts:        1,
+			NonRetryableErrorTypes: []string{},
+		},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
 
