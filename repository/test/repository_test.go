@@ -2,12 +2,12 @@ package test
 
 import (
 	"context"
-	"goenv/store"
+	"goenv/repository"
 	"testing"
 )
 
-func TestStore(t *testing.T) {
-	w := &store.Weather{}
+func TestRepository(t *testing.T) {
+	w := &repository.Weather{}
 	record, err := w.GetWeather(context.Background(), "London")
 	if err != nil {
 		t.Fatal(err)

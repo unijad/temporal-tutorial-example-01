@@ -8,7 +8,7 @@ import (
 	"go.temporal.io/sdk/worker"
 )
 
-func main() {
+func WorkflowDifnition() {
 	c, err := client.Dial(client.Options{})
 	if err != nil {
 		log.Fatalln("unable to create Temporal client", err)

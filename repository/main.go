@@ -1,4 +1,4 @@
-package store
+package repository
 
 import (
 	"goenv/messages"
@@ -14,11 +14,11 @@ const (
 	DB_NAME     = "temporal_example"
 )
 
-type Database struct {
+type Repository struct {
 	gorm *gorm.DB
 }
 
-func (d *Database) Connect() error {
+func (d *Repository) Connect() error {
 	db, err := gorm.Open(sqlite.Open("store.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")

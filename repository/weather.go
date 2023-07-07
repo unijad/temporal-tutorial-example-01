@@ -1,4 +1,4 @@
-package store
+package repository
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 type Weather struct{}
 
 func (w *Weather) GetWeather(ctx context.Context, cityName string) (*messages.WeatherData, error) {
-	db := &Database{}
+	db := &Repository{}
 	err := db.Connect()
 	if err != nil {
 		return nil, err

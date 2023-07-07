@@ -1,4 +1,4 @@
-package handler
+package service
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-func WeatherHandler(w http.ResponseWriter, r *http.Request) {
+func WeatherServiceHandler(w http.ResponseWriter, r *http.Request) {
 	// execute weather workflow with the city name from request query
 	cityName := r.URL.Query().Get("city")
 	if cityName == "" {
@@ -47,7 +47,7 @@ func WeatherHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	_, err = w.Write(jsonResponse)
 	if err != nil {
 		http.Error(w, "unable to write response", http.StatusInternalServerError)
 		return
