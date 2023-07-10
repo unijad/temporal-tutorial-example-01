@@ -11,32 +11,47 @@ import (
 	"go.temporal.io/sdk/testsuite"
 )
 
-func TestWeatherWorkflow(t *testing.T) {
+func TestCartWorkflow(t *testing.T) {
 	// Set up the test suite and testing execution environment
 	testSuite := &testsuite.WorkflowTestSuite{}
-	env := testSuite.NewTestWorkflowEnvironment()
 
-	// Mock activity implementation
-	env.OnActivity(activity.GetWeather, mock.Anything, mock.Anything).Return(&messages.WeatherData{
-		CityName:    "Cairo",
-		Temperature: 41,
-		Humidity:    80,
-		WindSpeed:   4,
-	}, nil)
+	t.Run("SetCart", func(t *testing.T) {
+		env := testSuite.NewTestWorkflowEnvironment()
+		// Mock activity implementation
+		env.OnActivity(activity.SetCart, mock.Anything, mock.Anything).Return(nil)
+		env.ExecuteWorkflow(workflow.SetCartWorkflow)
 
-	env.ExecuteWorkflow(workflow.WeatherWorkflow, "Cairo")
+		// Verify that the SetCart activity was executed
+		if err := env.GetWorkflowError(); err != nil {
+			t.Fatalf("Workflow failed: %v", err)
+		}
+	})
 
-	require.True(t, env.IsWorkflowCompleted())
-	require.NoError(t, env.GetWorkflowError())
+	t.Run("GetCart", func(t *testing.T) {
+		env := testSuite.NewTestWorkflowEnvironment()
+		// Mock activity implementation
+		products := &[]messages.Product{
+			{
+				Name:  "Product 1",
+				Price: 1.1,
+			},
+			{
+				Name:  "Product 2",
+				Price: 1.1,
+			},
+			{
+				Name:  "Product 3",
+				Price: 1.1,
+			},
+		}
+		env.OnActivity(activity.GetCart, mock.Anything).Return(products, nil)
+		env.ExecuteWorkflow(workflow.GetCartWorkflow)
 
-	var data []messages.WeatherData
-	require.NoError(t, env.GetWorkflowResult(&data))
-	require.Equal(t, []messages.WeatherData{
-		{
-			CityName:    "Cairo",
-			Temperature: 41,
-			Humidity:    80,
-			WindSpeed:   4,
-		},
-	}, data)
+		require.True(t, env.IsWorkflowCompleted())
+		require.NoError(t, env.GetWorkflowError())
+
+		var data *[]messages.Product
+		require.NoError(t, env.GetWorkflowResult(&data))
+		require.Equal(t, products, data)
+	})
 }

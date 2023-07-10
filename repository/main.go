@@ -24,15 +24,27 @@ func (d *Repository) Connect() error {
 		panic("failed to connect database")
 	}
 
-	err = db.AutoMigrate(&messages.WeatherData{})
+	err = db.AutoMigrate(&messages.Product{})
 	if err != nil {
 		panic("failed to migrate database")
 	}
-	// look if any records exists and if not add record
+
+	err = db.AutoMigrate(&messages.Cart{})
+	if err != nil {
+		panic("failed to migrate database")
+	}
+
 	var count int64
-	db.Model(&messages.WeatherData{}).Count(&count)
+	db.Model(&messages.Product{}).Count(&count)
 	if count == 0 {
-		db.Create(&messages.WeatherData{CityName: "London", Temperature: 36, Humidity: 40, WindSpeed: 21})
+		err := db.Create([]messages.Product{
+			{Name: "Product 1", Price: 10.0},
+			{Name: "Product 2", Price: 20.0},
+			{Name: "Product 3", Price: 30.0},
+		})
+		if err.Error != nil {
+			panic("failed to create products")
+		}
 	}
 
 	d.gorm = db

@@ -18,12 +18,16 @@ func Server() {
 	}
 	defer c.Close()
 
-	w := worker.New(c, "weather", worker.Options{})
-	w.RegisterWorkflow(workflow.WeatherWorkflow)
-	w.RegisterActivity(activity.GetWeather)
+	w := worker.New(c, "cart", worker.Options{})
+	w.RegisterWorkflow(workflow.SetCartWorkflow)
+	w.RegisterWorkflow(workflow.GetCartWorkflow)
+	w.RegisterActivity(activity.SetCart)
+	w.RegisterActivity(activity.GetCart)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/weather", WeatherServiceHandler) // curl -X GET http://localhost:8080/weather?city=Cairo
+	mux.HandleFunc("/cart", CartGetHandler) // curl -X GET http://localhost:8080/cart
+	mux.HandleFunc("/cart", CartSetHandler) // curl -X POST http://localhost:8080/cart
+	// mux.HandleFunc("/cart/set", CartSetHandler) // curl -X POST http://localhost:8080/cart
 	server := &http.Server{Addr: ":5000", Handler: mux}
 
 	// start the worker and the web server

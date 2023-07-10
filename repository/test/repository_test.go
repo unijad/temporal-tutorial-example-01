@@ -2,26 +2,49 @@ package test
 
 import (
 	"context"
+	"goenv/messages"
 	"goenv/repository"
 	"testing"
 )
 
 func TestRepository(t *testing.T) {
-	w := &repository.Weather{}
-	record, err := w.GetWeather(context.Background(), "London")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if record.CityName != "London" {
-		t.Fatalf("expected London but got %s", record.CityName)
-	}
-	if record.Temperature != 36 {
-		t.Fatalf("expected 36 but got %f", record.Temperature)
-	}
-	if record.Humidity != 40 {
-		t.Fatalf("expected 40 but got %f", record.Humidity)
-	}
-	if record.WindSpeed != 21 {
-		t.Fatalf("expected 21 but got %f", record.WindSpeed)
-	}
+	r := &repository.Cart{}
+
+	t.Run("SetCart", func(t *testing.T) {
+		err := r.SetCart(context.Background(), &messages.Cart{
+			Products: []string{"1", "2"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("GetCart", func(t *testing.T) {
+		cart, err := r.GetCart(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cart == nil {
+			t.Fatal("record is nil")
+		}
+
+		if len(*cart) == 0 {
+			t.Fatal("invalid length")
+		}
+	})
+
+	t.Run("GetProducts", func(t *testing.T) {
+		products, err := r.GetProducts(context.Background(), &messages.Cart{
+			Products: []string{"1", "2"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if products == nil {
+			t.Fatal("record is nil")
+		}
+
+		if len(*products) == 0 {
+			t.Fatal("invalid length")
+		}
+	})
 }

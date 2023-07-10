@@ -16,8 +16,20 @@ func WorkflowDifnition() {
 	defer c.Close()
 
 	w := worker.New(c, "weather", worker.Options{})
-	w.RegisterWorkflow(WeatherWorkflow)
-	w.RegisterActivity(activity.GetWeather)
+
+	// register workflows
+	w.RegisterWorkflow(GetCartWorkflow)
+	w.RegisterWorkflow(SetCartWorkflow)
+	w.RegisterWorkflow(StartOrderWorkflow)
+
+	// register activities
+	w.RegisterActivity(activity.GetCart)
+	w.RegisterActivity(activity.SetCart)
+	w.RegisterActivity(activity.StartOrder)
+	w.RegisterActivity(activity.CreateTransaction)
+	w.RegisterActivity(activity.CreateShipping)
+	w.RegisterActivity(activity.ConfirmShipping)
+
 	// Start listening to the Task Queue
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
