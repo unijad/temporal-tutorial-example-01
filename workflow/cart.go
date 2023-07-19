@@ -10,21 +10,18 @@ import (
 )
 
 // define the workflow function
-func SetCartWorkflow(ctx workflow.Context) error {
+func SetCartWorkflow(ctx workflow.Context, cart *messages.Cart) error {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 5,
-		RetryPolicy: &temporal.RetryPolicy{
-			InitialInterval:        time.Second,
-			BackoffCoefficient:     2.0,
-			MaximumInterval:        time.Minute,
-			MaximumAttempts:        1,
-			NonRetryableErrorTypes: []string{},
-		},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
 
 	// start the activities
-	workflow.ExecuteActivity(ctx, activity.SetCart, nil)
+	result := &messages.Cart{}
+	err := workflow.ExecuteActivity(ctx, activity.SetCart, cart).Get(ctx, result)
+	if err != nil {
+		return temporal.NewApplicationError(err.Error(), "error")
+	}
 
 	return nil
 }
@@ -33,26 +30,17 @@ func SetCartWorkflow(ctx workflow.Context) error {
 func GetCartWorkflow(ctx workflow.Context) (*[]messages.Product, error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 5,
-		RetryPolicy: &temporal.RetryPolicy{
-			InitialInterval:        time.Second,
-			BackoffCoefficient:     2.0,
-			MaximumInterval:        time.Minute,
-			MaximumAttempts:        1,
-			NonRetryableErrorTypes: []string{},
-		},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
 
 	// start the activities
-	cartFuture := workflow.ExecuteActivity(ctx, activity.GetCart)
-
-	// wait for activities to complete
-	var response *[]messages.Product
-	if err := cartFuture.Get(ctx, &response); err != nil {
-		return response, err
+	result := &[]messages.Product{}
+	err := workflow.ExecuteActivity(ctx, activity.GetCart).Get(ctx, result)
+	if err != nil {
+		return nil, temporal.NewApplicationError(err.Error(), "error")
 	}
 
-	return response, nil
+	return result, nil
 }
 
 // start order workflow

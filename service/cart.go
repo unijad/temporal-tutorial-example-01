@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"goenv/activity"
 	"goenv/messages"
+	"goenv/workflow"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
 )
 
@@ -50,33 +51,57 @@ func CartSetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 	// split productString
-	stringArr := strings.Split(productString, "")
-	err = setCart(r.Context(), c, &stringArr)
+	stringArr := strings.Split(productString, ",")
+	err = setCart(r.Context(), c, &messages.Cart{
+		Products: stringArr,
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	err = setCart(r.Context(), c, &[]string{})
+	jsonResponse, err := json.Marshal("{status: 'ok'}")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "unable to marshal response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		http.Error(w, "unable to write response", http.StatusInternalServerError)
+		return
 	}
 }
 
 func getCart(ctx context.Context, temporalClient client.Client) (*[]messages.Product, error) {
-	data, err := activity.GetCart(ctx)
+	we, err := temporalClient.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:        "GetCartWorkflow_" + uuid.New().String(),
+		TaskQueue: "cart",
+	}, workflow.GetCartWorkflow)
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+
+	result := &[]messages.Product{}
+	if err := we.Get(ctx, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func setCart(ctx context.Context, temporalClient client.Client, in *[]string) error {
-	cart := &messages.Cart{
-		Products: []string{"1", "2"},
-	}
-	err := activity.SetCart(ctx, cart)
+func setCart(ctx context.Context, temporalClient client.Client, in *messages.Cart) error {
+	we, err := temporalClient.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:        "SetCartWorkflow_" + uuid.New().String(),
+		TaskQueue: "cart",
+	}, workflow.SetCartWorkflow, in)
 	if err != nil {
 		return err
 	}
-	return err
+
+	if err := we.Get(ctx, nil); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -25,9 +25,9 @@ func Server() {
 	w.RegisterActivity(activity.GetCart)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/cart", CartGetHandler) // curl -X GET http://localhost:8080/cart
-	mux.HandleFunc("/cart", CartSetHandler) // curl -X POST http://localhost:8080/cart
-	// mux.HandleFunc("/cart/set", CartSetHandler) // curl -X POST http://localhost:8080/cart
+	mux.HandleFunc("/cart/set", CartSetHandler) // curl -X POST http://localhost:5000/cart/set\?products\=1,2,3
+	mux.HandleFunc("/cart", CartGetHandler)     // curl -X GET http://localhost:5000/cart
+
 	server := &http.Server{Addr: ":5000", Handler: mux}
 
 	// start the worker and the web server

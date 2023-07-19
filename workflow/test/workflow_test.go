@@ -22,9 +22,8 @@ func TestCartWorkflow(t *testing.T) {
 		env.ExecuteWorkflow(workflow.SetCartWorkflow)
 
 		// Verify that the SetCart activity was executed
-		if err := env.GetWorkflowError(); err != nil {
-			t.Fatalf("Workflow failed: %v", err)
-		}
+		require.NoError(t, env.GetWorkflowError())
+		require.True(t, env.IsWorkflowCompleted())
 	})
 
 	t.Run("GetCart", func(t *testing.T) {

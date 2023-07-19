@@ -15,7 +15,7 @@ func WorkflowDifnition() {
 	}
 	defer c.Close()
 
-	w := worker.New(c, "weather", worker.Options{})
+	w := worker.New(c, "cart", worker.Options{})
 
 	// register workflows
 	w.RegisterWorkflow(GetCartWorkflow)
